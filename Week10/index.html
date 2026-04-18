@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excel Visualization Masterclass — Pie Charts & Histograms</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e12;
+    --surface: #13151c;
+    --surface2: #1c1f2b;
+    --border: #252838;
+    --accent: #f5c842;
+    --accent2: #e05c5c;
+    --accent3: #5ce0b8;
+    --accent4: #7b7ef5;
+    --text: #e8e9f0;
+    --muted: #7e8196;
+    --heading-font: 'Syne', sans-serif;
+    --body-font: 'Lora', serif;
+    --mono-font: 'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body-font);
+    font-size: 16px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ---- NOISE TEXTURE ---- */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ---- HERO ---- */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(245,200,66,0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 80% 80%, rgba(92,224,184,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 10% 70%, rgba(224,92,92,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .hero-tag {
+    font-family: var(--mono-font);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    border: 1px solid rgba(245,200,66,0.3);
+    padding: 0.35rem 1rem;
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: var(--heading-font);
+    font-size: clamp(2.5rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    max-width: 900px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero-sub {
+    margin-top: 1.5rem;
+    font-family: var(--body-font);
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--muted);
+    max-width: 600px;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 2rem;
+    margin-top: 3rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.7s 0.3s ease both;
+  }
+
+  .hero-meta span {
+    font-family: var(--mono-font);
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .hero-meta span::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: block;
+  }
+
+  .nav-float {
+    position: fixed;
+    top: 1.5rem; right: 1.5rem;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    opacity: 0;
+    animation: fadeIn 1s 1s ease forwards;
+  }
+
+  .nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .nav-dot:hover, .nav-dot.active { background: var(--accent); transform: scale(1.4); }
+
+  /* ---- LAYOUT ---- */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---- SECTIONS ---- */
+  .section {
+    padding: 6rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-number {
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: var(--heading-font);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title em { color: var(--accent); font-style: normal; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(245,200,66,0.3); }
+
+  .card-accent {
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--accent);
+    border-radius: 4px 0 0 4px;
+  }
+  .card-accent.red { background: var(--accent2); }
+  .card-accent.teal { background: var(--accent3); }
+  .card-accent.purple { background: var(--accent4); }
+
+  .card h3 {
+    font-family: var(--heading-font);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  /* ---- TAGS ---- */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+  }
+  .tag-yellow { background: rgba(245,200,66,0.15); color: var(--accent); border: 1px solid rgba(245,200,66,0.25); }
+  .tag-red { background: rgba(224,92,92,0.15); color: var(--accent2); border: 1px solid rgba(224,92,92,0.25); }
+  .tag-teal { background: rgba(92,224,184,0.15); color: var(--accent3); border: 1px solid rgba(92,224,184,0.25); }
+  .tag-purple { background: rgba(123,126,245,0.15); color: var(--accent4); border: 1px solid rgba(123,126,245,0.25); }
+
+  /* ---- TABLES ---- */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono-font);
+    font-size: 0.85rem;
+  }
+
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(37,40,56,0.6);
+    color: var(--text);
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(245,200,66,0.03); }
+
+  /* ---- STEPS ---- */
+  .steps { counter-reset: step; margin: 1.5rem 0; }
+
+  .step {
+    display: flex;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    counter-increment: step;
+    min-width: 2rem; height: 2rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono-font);
+    font-size: 0.75rem;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .step-num::after { content: counter(step); }
+
+  .step-body { padding-top: 0.15rem; }
+  .step-body strong { font-family: var(--heading-font); font-style: normal; display: block; margin-bottom: 0.2rem; }
+
+  /* ---- CODE / MONO BLOCKS ---- */
+  .mono-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    font-family: var(--mono-font);
+    font-size: 0.83rem;
+    color: var(--accent3);
+    margin: 1rem 0;
+    overflow-x: auto;
+    line-height: 1.6;
+  }
+
+  /* ---- INSTRUCTOR / STUDENT BLOCKS ---- */
+  .role-block {
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .instructor {
+    background: rgba(245,200,66,0.05);
+    border: 1px solid rgba(245,200,66,0.2);
+  }
+  .student {
+    background: rgba(92,224,184,0.05);
+    border: 1px solid rgba(92,224,184,0.2);
+  }
+  .outcome {
+    background: rgba(123,126,245,0.05);
+    border: 1px solid rgba(123,126,245,0.2);
+  }
+
+  .role-label {
+    font-family: var(--mono-font);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  .instructor .role-label { color: var(--accent); }
+  .student .role-label { color: var(--accent3); }
+  .outcome .role-label { color: var(--accent4); }
+
+  /* ---- COMPARISON GRID ---- */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  @media(max-width:600px){ .compare-grid { grid-template-columns: 1fr; } }
+
+  .compare-card {
+    border-radius: 10px;
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+  }
+  .compare-card.bad {
+    background: rgba(224,92,92,0.06);
+    border-color: rgba(224,92,92,0.25);
+  }
+  .compare-card.good {
+    background: rgba(92,224,184,0.06);
+    border-color: rgba(92,224,184,0.25);
+  }
+  .compare-card h4 {
+    font-family: var(--heading-font);
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+  }
+  .compare-card.bad h4 { color: var(--accent2); }
+  .compare-card.good h4 { color: var(--accent3); }
+
+  /* ---- VISUAL PIE/HIST ILLUSTRATIONS ---- */
+  .viz-demo {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+  }
+
+  /* ---- SCENARIO ---- */
+  .scenario-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  .scenario-header {
+    background: var(--surface2);
+    padding: 1rem 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .scenario-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+  }
+  .scenario-body { padding: 1.75rem; }
+
+  /* ---- QUESTION CALLOUT ---- */
+  .question-list {
+    list-style: none;
+    margin: 1rem 0;
+  }
+  .question-list li {
+    padding: 0.5rem 0.75rem;
+    border-left: 3px solid var(--accent4);
+    margin-bottom: 0.5rem;
+    font-style: italic;
+    color: var(--muted);
+    font-size: 0.95rem;
+  }
+  .question-list li::before { content: "→ "; color: var(--accent4); font-style: normal; }
+
+  /* ---- CLOSING ---- */
+  .closing {
+    text-align: center;
+    padding: 8rem 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .closing-quote {
+    font-family: var(--heading-font);
+    font-size: clamp(1.6rem, 4vw, 3rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+  }
+  .closing-quote em { color: var(--accent); font-style: normal; }
+
+  /* ---- PILL BADGE ---- */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    padding: 0.35rem 0.85rem;
+    font-family: var(--mono-font);
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0.25rem;
+  }
+
+  /* ---- PYTHON TIP ---- */
+  .python-tip {
+    background: linear-gradient(135deg, rgba(123,126,245,0.08) 0%, rgba(92,224,184,0.05) 100%);
+    border: 1px solid rgba(123,126,245,0.2);
+    border-radius: 12px;
+    padding: 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+  .python-tip h4 {
+    font-family: var(--heading-font);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent4);
+    margin-bottom: 0.75rem;
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---- SCROLL TO TOP ---- */
+  .top-btn {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    color: var(--bg);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 200;
+  }
+  .top-btn.show { opacity: 1; transform: translateY(0); }
+
+  p { margin-bottom: 1rem; }
+  ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.4rem; }
+
+  strong { font-weight: 600; color: var(--text); }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+</style>
+</head>
+<body>
+
+<!-- Floating nav dots -->
+<nav class="nav-float" id="navDots"></nav>
+
+<!-- Scroll to top -->
+<button class="top-btn" id="topBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ======== HERO ======== -->
+<section class="hero" id="sec-hero">
+  <div class="hero-bg"></div>
+  <span class="hero-tag">Advanced Excel Masterclass</span>
+  <h1>Pie Charts &<br><span>Histograms</span> Unlocked</h1>
+  <p class="hero-sub">From chart creators to data interpreters and decision-makers</p>
+  <div class="hero-meta">
+    <span>Intermediate Excel Users</span>
+    <span>9 Deep-Dive Sections</span>
+    <span>3 Business Scenarios</span>
+    <span>Hands-On Exercises</span>
+  </div>
+
+  <!-- Inline animated SVG chart illustration -->
+  <div style="margin-top:3.5rem; opacity:0; animation: fadeIn 1s 0.8s ease forwards;">
+    <svg width="320" height="80" viewBox="0 0 320 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Histogram bars -->
+      <rect x="10" y="55" width="22" height="20" rx="3" fill="rgba(245,200,66,0.3)" style="animation: growBar 1s 1.2s ease forwards; transform-origin:bottom;"/>
+      <rect x="36" y="38" width="22" height="37" rx="3" fill="rgba(245,200,66,0.5)" style="animation: growBar 1s 1.3s ease forwards; transform-origin:bottom;"/>
+      <rect x="62" y="18" width="22" height="57" rx="3" fill="rgba(245,200,66,0.8)" style="animation: growBar 1s 1.4s ease forwards; transform-origin:bottom;"/>
+      <rect x="88" y="28" width="22" height="47" rx="3" fill="rgba(245,200,66,0.6)" style="animation: growBar 1s 1.5s ease forwards; transform-origin:bottom;"/>
+      <rect x="114" y="42" width="22" height="33" rx="3" fill="rgba(245,200,66,0.4)" style="animation: growBar 1s 1.6s ease forwards; transform-origin:bottom;"/>
+      <rect x="140" y="60" width="22" height="15" rx="3" fill="rgba(245,200,66,0.2)" style="animation: growBar 1s 1.7s ease forwards; transform-origin:bottom;"/>
+      <!-- Pie slices placeholder -->
+      <circle cx="240" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <path d="M240 40 L240 6 A34 34 0 0 1 274 40 Z" fill="rgba(245,200,66,0.7)"/>
+      <path d="M240 40 L274 40 A34 34 0 0 1 240 74 Z" fill="rgba(92,224,184,0.6)"/>
+      <path d="M240 40 L240 74 A34 34 0 0 1 208.5 19.5 Z" fill="rgba(224,92,92,0.6)"/>
+      <path d="M240 40 L208.5 19.5 A34 34 0 0 1 240 6 Z" fill="rgba(123,126,245,0.6)"/>
+      <!-- Labels -->
+      <text x="10" y="78" font-family="DM Mono, monospace" font-size="9" fill="rgba(126,129,150,0.8)">HISTOGRAM</text>
+      <text x="210" y="78" font-family="DM Mono, monospace" font-size="9" fill="rgba(126,129,150,0.8)">PIE CHART</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ======== SECTION 1: SESSION OVERVIEW ======== -->
+<section class="section" id="sec-1">
+<div class="container reveal">
+  <span class="section-number">Section 01</span>
+  <h2 class="section-title">Session <em>Overview</em></h2>
+  <p>This session upgrades students who can already build basic charts into analysts who know <em>when, why, and how</em> to use Pie Charts and Histograms to drive real decisions.</p>
+
+  <div class="card" style="margin-top:2rem;">
+    <div class="card-accent"></div>
+    <span class="tag tag-yellow">Target Audience</span>
+    <h3>Who This Is For</h3>
+    <p>Students with basic Excel knowledge — they can insert a chart, but struggle to interpret or choose the right one. No advanced statistics needed.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-accent teal"></div>
+    <span class="tag tag-teal">Learning Outcomes</span>
+    <h3>By End of Session, Students Will Be Able To:</h3>
+    <ul>
+      <li>Decide <strong>when NOT to use</strong> a pie chart or histogram — and what to use instead</li>
+      <li>Control bin sizes in histograms and explain how they affect interpretation</li>
+      <li>Identify distribution shape: normal, skewed, outlier-heavy, or multimodal</li>
+      <li>Clean and preprocess data before charting for professional results</li>
+      <li>Make a <strong>business recommendation</strong> based on chart insights — not just describe the chart</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <span class="tag tag-purple">Key Skills</span>
+    <h3>Students Will Gain</h3>
+    <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:0.5rem;">
+      <span class="pill">📊 Binning Strategy</span>
+      <span class="pill">🔍 Distribution Analysis</span>
+      <span class="pill">🥧 Data Preprocessing</span>
+      <span class="pill">🏷️ Smart Labeling</span>
+      <span class="pill">💡 Business Interpretation</span>
+      <span class="pill">📈 Donut Charts</span>
+      <span class="pill">⚠️ Chart Misuse Detection</span>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 2: CONCEPT BREAKER ======== -->
+<section class="section" id="sec-2">
+<div class="container reveal">
+  <span class="section-number">Section 02</span>
+  <h2 class="section-title">Concept Breaker: <em>When NOT to Use</em> These Charts</h2>
+
+  <!-- PIE CHART LIMITATIONS -->
+  <span class="tag tag-red">Pie Chart Limitations</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.4rem; font-weight:700; margin:0.75rem 0 1rem;">Why Pie Charts Fail in the Wild</h3>
+
+  <div class="card">
+    <div class="card-accent red"></div>
+    <h3>4 Real-World Bad Examples</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Market share across 12 product categories</strong> — Each slice is ~8%. Impossible to tell which category leads at a glance.</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Monthly expenses (Jan–Dec)</strong> — Tracking change over time? Pie shows nothing about trends. A line chart is far superior.</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Political party votes across 8 parties</strong> — Human eyes cannot compare angles like 22° vs 27°. Bar chart wins immediately.</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Website traffic source comparison (5 sources with similar percentages)</strong> — Slices of 18%, 20%, 21%, 22%, 19% are visually indistinguishable in a pie.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card bad">
+      <h4>❌ Bad: Pie Chart with 10 Categories</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Slice angles are near-identical</li>
+        <li>Legend needed → readers scan back and forth</li>
+        <li>No clear dominant segment</li>
+        <li>Color blindness risk with 10 hues</li>
+      </ul>
+    </div>
+    <div class="compare-card good">
+      <h4>✅ Better: Horizontal Bar Chart</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Sort by value — winner is immediately visible</li>
+        <li>Length comparison is natural for humans</li>
+        <li>Only 2 colors needed</li>
+        <li>Works with 3 or 30 categories</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="role-block instructor">
+    <span class="role-label">🎤 Instructor Script</span>
+    <p>"Open Excel. Take this dataset of 10 expense categories. First, make a pie chart. Now make a bar chart of the same data. Which one lets you instantly answer: <em>What are our top 3 costs?</em> Why? Discuss with your neighbor for 60 seconds."</p>
+  </div>
+
+  <hr>
+
+  <!-- HISTOGRAM LIMITATIONS -->
+  <span class="tag tag-yellow" style="margin-top:1rem;">Histogram Limitations</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.4rem; font-weight:700; margin:0.75rem 0 1rem;">How Bin Size Manipulates Truth</h3>
+
+  <div class="card">
+    <div class="card-accent"></div>
+    <h3>Same Data, Wildly Different Stories</h3>
+    <p>Consider 40 student exam scores (all between 40–95):</p>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Bin Size</th><th>Number of Bins</th><th>What It Suggests</th></tr>
+        <tr><td>5 marks</td><td>11 bins</td><td>Jagged, noisy — looks like random data</td></tr>
+        <tr><td>10 marks</td><td>6 bins</td><td>Clear bell curve — balanced class</td></tr>
+        <tr><td>30 marks</td><td>2 bins</td><td>Hides all variation — meaningless</td></tr>
+      </table>
+    </div>
+    <p style="margin-top:0.75rem; color:var(--muted); font-style:italic; font-size:0.9rem;">⚠️ The data is identical in all three cases. Only the bin size changed.</p>
+  </div>
+
+  <div class="role-block instructor">
+    <span class="role-label">🎤 Instructor Script</span>
+    <p>"I want you to build all three histograms in Excel — same 40 scores, different bin widths. Once done, answer this question: If I only showed you the 2-bin version, would you ever discover that most students scored between 65–75? Why does this matter if someone uses this to evaluate an exam's difficulty?"</p>
+  </div>
+
+  <div class="role-block student">
+    <span class="role-label">📝 Student Task</span>
+    <p>Build histograms with bin sizes 5, 10, and 30 on the same dataset. Note which shape appears in each and write a 1-sentence interpretation for each version.</p>
+  </div>
+
+  <div class="role-block outcome">
+    <span class="role-label">✅ Expected Outcome</span>
+    <p>Students realize bin size is a <strong>design choice</strong> with ethical implications — it can make a difficult exam look easy or vice versa.</p>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 3: HISTOGRAM DEEP DIVE ======== -->
+<section class="section" id="sec-3">
+<div class="container reveal">
+  <span class="section-number">Section 03</span>
+  <h2 class="section-title">Histogram <em>Deep Dive</em></h2>
+
+  <!-- A. BINNING STRATEGY -->
+  <span class="tag tag-yellow">A. Binning Strategy</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">Step-by-Step: Change Bin Width in Excel</h3>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body"><strong>Insert your histogram</strong>: Select data → Insert → Charts → Histogram (under Statistical)</div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body"><strong>Right-click the X-axis</strong> → Format Axis</div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body"><strong>Under "Axis Options"</strong> choose: <em>Bin Width</em> (enter a number like 10) OR <em>Number of Bins</em> (enter 6)</div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body"><strong>Observe the shape change</strong> — adjust until the pattern becomes clear without hiding variation</div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body"><strong>Rule of thumb</strong>: Use <em>√n</em> bins where n = number of data points. For 100 scores → ~10 bins.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent"></div>
+    <h3>Practice Dataset: Exam Marks (40 Students)</h3>
+    <div class="table-wrap">
+      <table>
+        <tr><th>Student Range</th><th>Sample Scores</th></tr>
+        <tr><td>Students 1–10</td><td>45, 52, 58, 61, 63, 67, 68, 70, 71, 72</td></tr>
+        <tr><td>Students 11–20</td><td>72, 73, 73, 74, 75, 75, 76, 77, 78, 79</td></tr>
+        <tr><td>Students 21–30</td><td>79, 80, 81, 82, 83, 83, 85, 87, 89, 90</td></tr>
+        <tr><td>Students 31–40</td><td>91, 92, 92, 93, 94, 94, 95, 88, 86, 84</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="compare-grid">
+    <div class="compare-card bad">
+      <h4>❌ Too Few Bins (2–3)</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Hides all meaningful variation</li>
+        <li>Can't detect clusters or outliers</li>
+        <li>False sense of uniformity</li>
+      </ul>
+    </div>
+    <div class="compare-card good">
+      <h4>✅ Appropriate Bins (6–8)</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Reveals distribution shape clearly</li>
+        <li>Clusters and outliers visible</li>
+        <li>Pattern is interpretable</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- B. DISTRIBUTION ANALYSIS -->
+  <span class="tag tag-teal">B. Distribution Analysis</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">Reading the Shape of Your Data</h3>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:1rem 0;">
+    <div class="card" style="margin:0;">
+      <div class="card-accent teal"></div>
+      <h3>🔔 Normal Distribution</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Bell-shaped, symmetric around the center. Most values near the mean. E.g., heights in a population.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent red"></div>
+      <h3>→ Right Skew (Positive)</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Long tail to the right. Most values low, few are very high. E.g., salary distributions, income data.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent"></div>
+      <h3>← Left Skew (Negative)</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Long tail to the left. Most values high, few are very low. E.g., age of retirement, life expectancy.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent purple"></div>
+      <h3>⛰️⛰️ Bimodal / Multimodal</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Two or more peaks. Suggests two separate groups in data. E.g., exam scores split between prepared/unprepared students.</p>
+    </div>
+  </div>
+
+  <div class="role-block instructor">
+    <span class="role-label">🎤 Instructor Questions to Ask</span>
+    <ul>
+      <li>"What does a right-skewed salary histogram tell an HR manager about fairness?"</li>
+      <li>"If student scores are bimodal, what does that tell you about the teaching method?"</li>
+      <li>"Where is the outlier in this histogram? What would you do with that data point?"</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <!-- C. ADVANCED INSIGHT -->
+  <span class="tag tag-purple">C. Advanced Insight</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">Overlaying a Trend Interpretation</h3>
+
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <h3>Method: Add a Secondary Axis Line (Manual Trend)</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Create a helper column</strong> with midpoint values and expected frequency counts</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Add as a new series</strong> to your histogram chart → Change series type to Line</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Move to secondary axis</strong> → Format to a contrasting color (e.g., orange)</div>
+      </div>
+    </div>
+    <p style="margin-top:1rem; font-style:italic; color:var(--muted);">Why shape matters: A right-skewed salary distribution means a <strong>few earners distort the average</strong> — the median is a better metric for reporting. This single shape insight changes which statistic you use in a board report.</p>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 4: PIE CHART ADVANCEMENT ======== -->
+<section class="section" id="sec-4">
+<div class="container reveal">
+  <span class="section-number">Section 04</span>
+  <h2 class="section-title">Pie Chart <em>Advancement</em></h2>
+
+  <!-- A. DATA PREPROCESSING -->
+  <span class="tag tag-yellow">A. Data Preprocessing</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">Clean Before You Chart</h3>
+
+  <div class="compare-grid">
+    <div class="compare-card bad">
+      <h4>❌ Before Cleaning</h4>
+      <div class="table-wrap" style="border:none; margin:0.75rem 0 0;">
+        <table>
+          <tr><th>Category</th><th>Sales %</th></tr>
+          <tr><td>Electronics</td><td>35%</td></tr>
+          <tr><td>Clothing</td><td>25%</td></tr>
+          <tr><td>Toys</td><td>4%</td></tr>
+          <tr><td>Books</td><td>3%</td></tr>
+          <tr><td>Stationery</td><td>2%</td></tr>
+          <tr><td>Garden</td><td>1%</td></tr>
+          <tr><td>Sports</td><td>30%</td></tr>
+        </table>
+      </div>
+      <p style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;">7 slices, 3 tiny ones cluttering the chart</p>
+    </div>
+    <div class="compare-card good">
+      <h4>✅ After Cleaning</h4>
+      <div class="table-wrap" style="border:none; margin:0.75rem 0 0;">
+        <table>
+          <tr><th>Category</th><th>Sales %</th></tr>
+          <tr><td>Electronics</td><td>35%</td></tr>
+          <tr><td>Sports</td><td>30%</td></tr>
+          <tr><td>Clothing</td><td>25%</td></tr>
+          <tr><td><strong>Others</strong></td><td><strong>10%</strong></td></tr>
+        </table>
+      </div>
+      <p style="font-size:0.8rem; color:var(--muted); margin-top:0.5rem;">4 clean slices, sorted by size</p>
+    </div>
+  </div>
+
+  <div class="role-block instructor">
+    <span class="role-label">🎤 Instructor Rule</span>
+    <p>"Group any category under 5% into 'Others'. Then sort remaining categories from largest to smallest. Your pie should never have more than 5–6 slices for clean readability."</p>
+  </div>
+
+  <hr>
+
+  <!-- B. LABELING STRATEGY -->
+  <span class="tag tag-teal">B. Labeling Strategy</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">What Your Labels Should Say</h3>
+
+  <div class="compare-grid">
+    <div class="compare-card bad">
+      <h4>❌ Bad Labeling</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Only shows category name (no %, no value)</li>
+        <li>Legend placed far from slices</li>
+        <li>Percentage in tiny font</li>
+        <li>Numbers overlap each other</li>
+      </ul>
+    </div>
+    <div class="compare-card good">
+      <h4>✅ Good Labeling</h4>
+      <ul style="font-size:0.9rem; color:var(--muted);">
+        <li>Format: "Electronics — 35% (₹3.5L)"</li>
+        <li>Labels outside with leader lines</li>
+        <li>Font ≥ 9pt, bold for key slice</li>
+        <li>Callout box for the most important segment</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mono-block">
+Right-click chart → Format Data Labels<br>
+☑ Category Name<br>
+☑ Percentage<br>
+☑ Value (optional for business reports)<br>
+Label Position → Outside End<br>
+Separator → " — " (dash looks cleaner than comma)
+  </div>
+
+  <hr>
+
+  <!-- C. DONUT CHART -->
+  <span class="tag tag-purple">C. Donut Chart Upgrade</span>
+  <h3 style="font-family:var(--heading-font); font-size:1.3rem; font-weight:700; margin:0.75rem 0 1rem;">When to Use a Donut</h3>
+
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <h3>Donut vs Pie: The Deciding Rule</h3>
+    <p>Use a <strong>Donut Chart</strong> when you want to show <em>one central KPI</em> alongside the breakdown — the hole in the middle is real estate for insight.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Insert → Chart → Doughnut</strong> (same data as pie)</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Insert a Text Box</strong> centered over the hole → type "Total: ₹14L" or "92% Satisfied"</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Group</strong> chart + text box so they move together</div>
+      </div>
+    </div>
+    <p style="font-style:italic; color:var(--muted); font-size:0.9rem; margin-top:0.75rem;">Example: A customer satisfaction donut with "87% Positive" in the center communicates faster than any table.</p>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 5: BUSINESS SCENARIOS ======== -->
+<section class="section" id="sec-5">
+<div class="container reveal">
+  <span class="section-number">Section 05</span>
+  <h2 class="section-title">Business Context <em>Application</em></h2>
+
+  <!-- SCENARIO 1 -->
+  <div class="scenario-card">
+    <div class="scenario-header">
+      <div class="scenario-icon" style="background:rgba(245,200,66,0.15);">🏪</div>
+      <div>
+        <span class="tag tag-yellow" style="margin:0;">Scenario 1</span>
+        <h3 style="font-family:var(--heading-font); font-size:1.1rem; font-weight:700;">Sales Distribution by Region</h3>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Region</th><th>Sales (₹ Lakhs)</th><th>% of Total</th></tr>
+          <tr><td>North</td><td>42</td><td>35%</td></tr>
+          <tr><td>South</td><td>30</td><td>25%</td></tr>
+          <tr><td>West</td><td>24</td><td>20%</td></tr>
+          <tr><td>East</td><td>14</td><td>12%</td></tr>
+          <tr><td>Central</td><td>10</td><td>8%</td></tr>
+        </table>
+      </div>
+      <div class="role-block student" style="margin-top:1rem;">
+        <span class="role-label">📝 Student Task</span>
+        <p>Build a cleaned Pie Chart (or Donut) with proper labels. Add "Total: ₹1.2Cr" in the center if using Donut.</p>
+      </div>
+      <ul class="question-list">
+        <li>Which region dominates sales? Should North get more resources or is it already at capacity?</li>
+        <li>Central is at 8% — is this a growth opportunity or a market that isn't working?</li>
+        <li>If you were a Regional Manager for South, what's your argument for more investment?</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENARIO 2 -->
+  <div class="scenario-card">
+    <div class="scenario-header">
+      <div class="scenario-icon" style="background:rgba(92,224,184,0.15);">🎓</div>
+      <div>
+        <span class="tag tag-teal" style="margin:0;">Scenario 2</span>
+        <h3 style="font-family:var(--heading-font); font-size:1.1rem; font-weight:700;">Student Marks Histogram</h3>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Score Range</th><th>Number of Students</th></tr>
+          <tr><td>30 – 40</td><td>3</td></tr>
+          <tr><td>40 – 50</td><td>5</td></tr>
+          <tr><td>50 – 60</td><td>8</td></tr>
+          <tr><td>60 – 70</td><td>14</td></tr>
+          <tr><td>70 – 80</td><td>18</td></tr>
+          <tr><td>80 – 90</td><td>10</td></tr>
+          <tr><td>90 – 100</td><td>2</td></tr>
+        </table>
+      </div>
+      <div class="role-block student" style="margin-top:1rem;">
+        <span class="role-label">📝 Student Task</span>
+        <p>Build a Histogram with bin width = 10. Identify the shape. Then rebuild with bin width = 5 and compare.</p>
+      </div>
+      <ul class="question-list">
+        <li>Is this a normal distribution or slightly skewed? In which direction?</li>
+        <li>What does the cluster at 70–80 suggest about exam difficulty?</li>
+        <li>The 3 students in 30–40 range — are they outliers? How does that affect average vs median?</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SCENARIO 3 -->
+  <div class="scenario-card">
+    <div class="scenario-header">
+      <div class="scenario-icon" style="background:rgba(224,92,92,0.15);">💼</div>
+      <div>
+        <span class="tag tag-red" style="margin:0;">Scenario 3</span>
+        <h3 style="font-family:var(--heading-font); font-size:1.1rem; font-weight:700;">Salary Distribution Analysis</h3>
+      </div>
+    </div>
+    <div class="scenario-body">
+      <div class="table-wrap">
+        <table>
+          <tr><th>Salary Range (₹ LPA)</th><th>Number of Employees</th></tr>
+          <tr><td>3 – 6</td><td>45</td></tr>
+          <tr><td>6 – 9</td><td>30</td></tr>
+          <tr><td>9 – 12</td><td>15</td></tr>
+          <tr><td>12 – 18</td><td>6</td></tr>
+          <tr><td>18 – 30</td><td>3</td></tr>
+          <tr><td>30 – 80</td><td>1</td></tr>
+        </table>
+      </div>
+      <div class="role-block student" style="margin-top:1rem;">
+        <span class="role-label">📝 Student Task</span>
+        <p>Plot histogram. Describe the skewness. Then calculate Mean vs Median using Excel's AVERAGE() and MEDIAN() functions and note the difference.</p>
+      </div>
+      <ul class="question-list">
+        <li>Is income evenly distributed? What shape confirms this?</li>
+        <li>The mean salary is ₹9.2L but median is ₹6.5L — which should HR quote in a job posting? Why?</li>
+        <li>What policy intervention would this distribution suggest for an HR director?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 6: COMPARISON EXERCISE ======== -->
+<section class="section" id="sec-6">
+<div class="container reveal">
+  <span class="section-number">Section 06</span>
+  <h2 class="section-title">Comparison Thinking <em>Exercise</em></h2>
+
+  <p>Use the <strong>single dataset below</strong>. Build all three chart types and answer the comparison questions.</p>
+
+  <div class="table-wrap">
+    <table>
+      <tr><th>Department</th><th>Budget Spent (₹L)</th><th>Headcount</th></tr>
+      <tr><td>Marketing</td><td>18</td><td>12</td></tr>
+      <tr><td>Engineering</td><td>45</td><td>35</td></tr>
+      <tr><td>Sales</td><td>30</td><td>28</td></tr>
+      <tr><td>HR</td><td>8</td><td>6</td></tr>
+      <tr><td>Operations</td><td>22</td><td>19</td></tr>
+    </table>
+  </div>
+
+  <div class="role-block student" style="margin-top:1.5rem;">
+    <span class="role-label">📝 Student Task</span>
+    <p>Build all three: a <strong>Pie Chart</strong> (budget share), a <strong>Bar Chart</strong> (budget by department), and a <strong>Histogram</strong> (headcount distribution). Label each professionally.</p>
+  </div>
+
+  <ul class="question-list">
+    <li>Which chart best answers: "Which department uses most of the budget?" → Bar Chart wins. Why?</li>
+    <li>Which chart would you show in a board presentation for a quick composition overview? → Pie/Donut.</li>
+    <li>Which chart is potentially misleading if the goal is to compare department sizes? → Pie, because slice areas are hard to compare precisely.</li>
+    <li>Can you build a meaningful Histogram from this data? If the dataset had 100 employees with individual salaries, would a histogram be more useful?</li>
+  </ul>
+
+  <div class="role-block outcome">
+    <span class="role-label">✅ Expected Outcome</span>
+    <p>Students understand that <strong>the same data can support multiple charts</strong>, but each answers a different question. Choosing wrongly doesn't just look bad — it misleads decision-makers.</p>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 7: ADVANCED TECHNIQUES ======== -->
+<section class="section" id="sec-7">
+<div class="container reveal">
+  <span class="section-number">Section 07</span>
+  <h2 class="section-title">Advanced Excel <em>Techniques</em></h2>
+
+  <span class="tag tag-yellow">Histogram: Two Pro Methods</span>
+
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-accent"></div>
+    <h3>Method 1: Data Analysis Toolpak</h3>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Enable it</strong>: File → Options → Add-ins → Analysis Toolpak → OK</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Data tab → Data Analysis → Histogram</strong></div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Set Input Range</strong> (your scores) + <strong>Bin Range</strong> (your custom cutoffs: 40, 50, 60, 70, 80, 90)</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Check "Chart Output"</strong> → Excel builds both the frequency table AND chart</div>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:0.9rem; font-style:italic;">Pro tip: The Toolpak gives you full control over exact bin boundaries — perfect for reports.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-accent teal"></div>
+    <h3>Method 2: FREQUENCY Function</h3>
+    <div class="mono-block">
+=FREQUENCY(data_array, bins_array)<br><br>
+Example:<br>
+Data: A2:A41 (your 40 scores)<br>
+Bins: D2:D7 → {50, 60, 70, 80, 90, 100}<br><br>
+Select E2:E8 → type the formula → press CTRL+SHIFT+ENTER<br>
+(Array formula — works in Excel 2019 and earlier)<br>
+In Excel 365: Just press ENTER (dynamic array)
+    </div>
+    <p style="color:var(--muted); font-size:0.9rem;">FREQUENCY lets you build custom frequency tables that update live as data changes — ideal for dynamic dashboards.</p>
+  </div>
+
+  <hr>
+
+  <span class="tag tag-red">Pie Chart: Advanced Formatting</span>
+
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-accent red"></div>
+    <h3>Slice Explosion — When and Why</h3>
+    <p><strong>When:</strong> You want to highlight ONE specific segment to the audience.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Click the pie once</strong> (selects all slices)</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Click the target slice again</strong> (selects only that slice)</div>
+      </div>
+      <div class="step">
+        <div class="step-num"></div>
+        <div class="step-body"><strong>Drag outward</strong> or use Format Data Point → Point Explosion → set to 10–15%</div>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:0.9rem; font-style:italic;">⚠️ Use sparingly. Exploding 3+ slices looks like a pie fight, not a presentation.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-accent purple"></div>
+    <h3>Color Consistency Principles</h3>
+    <ul>
+      <li>Use your company's brand colors for the primary slice</li>
+      <li>Greys and muted tones for secondary slices — let the key segment pop</li>
+      <li>Never use default Excel rainbow colors in professional reports</li>
+      <li>Test your chart in grayscale (Print Preview) — if unreadable, fix the colors</li>
+      <li>Consistent color-to-category mapping: if "North" is blue in one chart, it's blue in all charts</li>
+    </ul>
+  </div>
+
+  <!-- PYTHON TIP -->
+  <div class="python-tip">
+    <h4>🐍 Python Equivalent (Bonus)</h4>
+    <p style="color:var(--muted); font-size:0.9rem; margin-bottom:0.75rem;">For advanced automation or larger datasets, the same analyses in Python:</p>
+    <div class="mono-block" style="margin:0; background:rgba(0,0,0,0.3);">
+import pandas as pd<br>
+import matplotlib.pyplot as plt<br><br>
+# Histogram with custom bins<br>
+df['score'].plot.hist(bins=[40,50,60,70,80,90,100],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;edgecolor='black', color='steelblue')<br><br>
+# Pie chart with grouping<br>
+df.groupby('region')['sales'].sum().plot.pie(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;autopct='%1.1f%%', startangle=90)
+    </div>
+    <p style="color:var(--muted); font-size:0.85rem; margin-top:0.75rem;">Libraries: <strong>matplotlib</strong> for charts, <strong>seaborn</strong> for beautiful distributions, <strong>plotly</strong> for interactive dashboards.</p>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 8: INTERACTIVE ELEMENTS ======== -->
+<section class="section" id="sec-8">
+<div class="container reveal">
+  <span class="section-number">Section 08</span>
+  <h2 class="section-title">Interactive <em>Elements</em> Guide</h2>
+  <p>For each major section, instructors should follow this rhythm:</p>
+
+  <div class="card">
+    <div class="card-accent"></div>
+    <span class="tag tag-yellow">Section 2 — Chart Limitations</span>
+    <div class="role-block instructor" style="margin-top:1rem;">
+      <span class="role-label">🎤 Instructor Script</span>
+      <p>"I'm going to show you a chart. Tell me — what's wrong with it. Don't explain what it shows. Tell me where it fails." [Show 12-category pie chart]</p>
+    </div>
+    <div class="role-block student">
+      <span class="role-label">📝 Student Task</span>
+      <p>List 3 things the pie chart fails to communicate. Then recreate it as a sorted bar chart. Compare answers with a partner.</p>
+    </div>
+    <div class="role-block outcome">
+      <span class="role-label">✅ Expected Outcome</span>
+      <p>Students identify: angle comparison difficulty, too many colors, no clear winner visible. They experience firsthand why bar charts win for comparison.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent teal"></div>
+    <span class="tag tag-teal">Section 3 — Histogram Distribution</span>
+    <div class="role-block instructor" style="margin-top:1rem;">
+      <span class="role-label">🎤 Instructor Script</span>
+      <p>"You are the Dean of your college. This histogram shows your students' exam scores. Write a 2-sentence report for the academic board. Go."</p>
+    </div>
+    <div class="role-block student">
+      <span class="role-label">📝 Student Task</span>
+      <p>Write interpretation. Include: distribution shape, whether exam was too easy/hard, any recommendations.</p>
+    </div>
+    <div class="role-block outcome">
+      <span class="role-label">✅ Expected Outcome</span>
+      <p>Students bridge technical observation ("right-skewed") to business language ("majority of students performed below 70, suggesting the exam difficulty was appropriate but teaching in the 70–80 range needs reinforcement").</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-accent red"></div>
+    <span class="tag tag-red">Section 5 — Salary Scenario</span>
+    <div class="role-block instructor" style="margin-top:1rem;">
+      <span class="role-label">🎤 Instructor Script</span>
+      <p>"You're an HR manager. A journalist asks: 'What's the average salary at your company?' Your average is ₹9.2L but your histogram shows massive right skew. Do you quote the mean or median? What are the ethical implications?"</p>
+    </div>
+    <div class="role-block student">
+      <span class="role-label">📝 Student Task</span>
+      <p>Debate in pairs: Mean vs Median — which is honest? Which is misleading? Present your answer in 30 seconds.</p>
+    </div>
+    <div class="role-block outcome">
+      <span class="role-label">✅ Expected Outcome</span>
+      <p>Students understand that choosing the wrong summary statistic isn't just a math error — it's an integrity issue. This makes the session unforgettable.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======== SECTION 9: DASHBOARD TIPS ======== -->
+<section class="section" id="sec-9">
+<div class="container reveal">
+  <span class="section-number">Section 09</span>
+  <h2 class="section-title">Real-World <em>Dashboard Tips</em></h2>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:1rem;">
+    <div class="card" style="margin:0;">
+      <div class="card-accent"></div>
+      <h3>🎯 One Question Per Chart</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Every chart should answer exactly one business question. Write the question as the chart title ("Which region leads sales?" not "Regional Sales")</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent teal"></div>
+      <h3>📐 Max 3 Chart Types Per Dashboard</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Using 6 different chart types looks chaotic. Pick 2–3 consistent types. Mix one pie/donut with bars and a line trend for most business dashboards.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent purple"></div>
+      <h3>🔗 Link Charts to Live Data</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Use Excel Tables (CTRL+T) as your data source. Charts update automatically when data changes — a must for monthly reports.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent red"></div>
+      <h3>📊 Annotate Key Insights</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Add a text box to your histogram pointing to the peak with "Most customers aged 25–35". The insight should be in the chart — not just in your head.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent"></div>
+      <h3>🖨️ Grayscale Test</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Print your dashboard in grayscale before finalizing. If you can't distinguish the segments, your color choices are doing the work — fix the design instead.</p>
+    </div>
+    <div class="card" style="margin:0;">
+      <div class="card-accent teal"></div>
+      <h3>📱 Mobile-First Thinking</h3>
+      <p style="font-size:0.9rem; color:var(--muted);">Executives often view dashboards on phones. Use large fonts (12pt minimum), simple layouts, and avoid small legends that disappear at small sizes.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ======== CLOSING ======== -->
+<div class="closing" id="sec-close">
+  <p style="font-family:var(--mono-font); font-size:0.75rem; letter-spacing:0.15em; color:var(--accent); text-transform:uppercase; margin-bottom:1.5rem;">Closing Insight</p>
+  <div class="closing-quote">
+    "A chart is not for <em>showing data</em>.<br>It is for <em>making decisions</em>."
+  </div>
+  <p style="color:var(--muted); max-width:520px; margin:0 auto 3rem; font-size:0.95rem;">Every design choice — bin width, slice grouping, label format, color — either serves the decision-maker or betrays them. The analyst's job is to always serve clarity.</p>
+
+  <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+    <span class="pill">📊 Pie Charts</span>
+    <span class="pill">📈 Histograms</span>
+    <span class="pill">🍩 Donut Charts</span>
+    <span class="pill">🐍 Python Ready</span>
+    <span class="pill">💡 Decision-Driven</span>
+  </div>
+
+  <p style="color:var(--border); font-family:var(--mono-font); font-size:0.7rem; margin-top:4rem; letter-spacing:0.1em;">EXCEL VISUALIZATION MASTERCLASS · ADVANCED MODULE</p>
+</div>
+
+<script>
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => observer.observe(r));
+
+  // Nav dots
+  const sections = ['sec-hero','sec-1','sec-2','sec-3','sec-4','sec-5','sec-6','sec-7','sec-8','sec-9','sec-close'];
+  const navDots = document.getElementById('navDots');
+  sections.forEach((id, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot';
+    dot.title = `Section ${i}`;
+    dot.onclick = () => document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+    navDots.appendChild(dot);
+  });
+
+  // Active dot on scroll
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    // top button
+    document.getElementById('topBtn').classList.toggle('show', scrollY > 400);
+    // nav dots
+    sections.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      const rect = el.getBoundingClientRect();
+      navDots.children[i]?.classList.toggle('active', rect.top <= 200 && rect.bottom > 0);
+    });
+  });
+</script>
+</body>
+</html>
