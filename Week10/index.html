@@ -185,6 +185,14 @@ table.dt .mid { color:var(--gold); font-weight:600; }
 .bin-card p { font-size:11px; color:var(--muted); line-height:1.4; }
 @media(max-width:600px){ .bin-compare { grid-template-columns:1fr; } }
 
+/* Student submissions (static PNGs) */
+.student-work-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:8px; }
+.student-figure { margin:0; background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:14px; text-align:center; }
+.student-figure img { width:100%; height:auto; display:block; border-radius:6px; border:1px solid var(--border); background:#fff; }
+.student-figure figcaption { font-size:12.5px; color:var(--muted); margin-top:12px; line-height:1.45; }
+.student-figure figcaption strong { color:var(--ink); display:block; font-family:'DM Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; }
+@media(max-width:700px){ .student-work-grid { grid-template-columns:1fr; } }
+
 /* ── FOOTER ── */
 footer { background:var(--ink); color:rgba(255,255,255,.4); text-align:center; padding:32px 20px; font-size:12.5px; }
 footer strong { color:rgba(255,255,255,.7); }
@@ -355,6 +363,21 @@ li { margin-bottom:.3rem; }
         <div class="rb-label">🎤 Instructor Script</div>
         "Open Excel. Same 8-category dataset — make a pie chart, then a sorted bar chart. Ask: <em>Which one answers 'What are our top 3 costs?' in under 3 seconds?</em> Discuss with your neighbour."
       </div>
+
+      <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h4 style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;">Student work — Pie charts</h4>
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">Submissions from <strong>Aditya</strong> and <strong>Tushar</strong> for class discussion (labels, slice count, and legibility).</p>
+        <div class="student-work-grid">
+          <figure class="student-figure">
+            <img src="Pie%20Chart%20Aditya.png" alt="Pie chart visualization created by Aditya">
+            <figcaption><strong>Aditya</strong> Pie chart — student submission.</figcaption>
+          </figure>
+          <figure class="student-figure">
+            <img src="Pie%20chart%20Tushar.png" alt="Pie chart visualization created by Tushar">
+            <figcaption><strong>Tushar</strong> Pie chart — student submission.</figcaption>
+          </figure>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -422,6 +445,21 @@ li { margin-bottom:.3rem; }
       <div class="role-block rb-outcome">
         <div class="rb-label">✅ Expected Outcome</div>
         Students realise bin size is a <strong>design choice with ethical implications</strong> — it can make a hard exam look easy and vice versa.
+      </div>
+
+      <div style="margin-top:28px;padding-top:22px;border-top:1px solid var(--border);">
+        <h4 style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px;">Student work — Histograms</h4>
+        <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">Submissions from <strong>Aditya</strong> and from <strong>Vedant &amp; Shanae</strong> — compare styling, bin choices, and how quickly you read the story in each.</p>
+        <div class="student-work-grid">
+          <figure class="student-figure">
+            <img src="Histogram%20Aditya.png" alt="Histogram visualization created by Aditya">
+            <figcaption><strong>Aditya</strong> Histogram — student submission.</figcaption>
+          </figure>
+          <figure class="student-figure">
+            <img src="Histogram%20Vedant%20shanae.png" alt="Histogram visualization created by Vedant and Shanae">
+            <figcaption><strong>Vedant &amp; Shanae</strong> Histogram — joint student submission.</figcaption>
+          </figure>
+        </div>
       </div>
     </div>
   </div>
